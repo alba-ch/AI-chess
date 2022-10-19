@@ -9,6 +9,12 @@ from itertools import permutations
 import copy
 
 
+class State:
+    def __init__(self, state_list):
+        self.list = state_list
+        self.set = self.setify(state_list)
+        self.visited = True
+
 class Aichess():
     """
     A class to represent the game of chess.
@@ -230,8 +236,6 @@ class Aichess():
                         prev[setified_nextState] = state # Assign its father.
                         que.put((setified_nextState, depth + 1))  # Put it in the queue.
 
-
-
     def compute_heuristic(self, currentState):
         """
         Function that calculates the minimum distance between the current state and all checkmate states in checkmateList.
@@ -323,6 +327,37 @@ class Aichess():
                     elif costs[setified_nextState] > cost:
                         prev[setified_nextState] = state # Update the father.
                         costs[setified_nextState] = cost # Update the cost.
+
+
+    def minimax(self, currentState, depth, black):
+
+        # Si hem superat el depth definit o l'estat actual és un checkmate, avaluem la posició.
+        if depth==0 or self.isCheckmate(currentState.set):
+            return self.compute_heuristic(self, currentState.set)
+
+        # Si estan jugant les negres, escollim el cost més gran avaluat. (heurística major, menys proper a un checkmate blanc)
+        if black:
+            maxCost = -float('inf')
+            for nextState in self.getListNextStatesW(currentState.list):
+                if not isinstance(nextState,State) or not nextState.visited:
+                    nextState = State(nextState)
+                    cost = self.minimax(nextState,depth-1,False)
+                    maxCost = max(maxCost, cost)
+                    #print("Current Black, move: ", nextState, ", cost: ", cost, "selected: ", maxCost)
+            return maxCost
+
+        # Si estan jugant les blanques, escollim el cost més petit avaluat. (heurística menor, més proper a un checkmate blanc)
+        else:
+            minCost = +float('inf')
+            for nextState in self.getListNextStatesW(currentState.list):
+                if not isinstance(nextState, State) or not nextState.visited:
+                    nextState = State(nextState)
+                    cost = self.minimax(nextState, depth - 1, False)
+                    minCost = min(minCost, cost)
+                    #print("Current WHITE, move: ",nextState,", cost: ",cost,"selected: ",minCost)
+            return minCost
+
+
 
     def tests(self, currentState):
         '''
